@@ -4,7 +4,7 @@ go 1.21.6
 
 require (
 	github.com/docker/docker v26.0.1+incompatible
-	github.com/porebric/configs v1.0.1
+	github.com/porebric/configs v1.0.3
 	github.com/porebric/logger v0.1.0
 	github.com/prometheus/client_golang v1.19.0
 )
