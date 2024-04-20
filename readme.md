@@ -11,9 +11,6 @@
       SERVICE_2: container_name_2
     ports:
       - 9339:9338
-    depends_on:
-      - prometheus
-      - redis2
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
