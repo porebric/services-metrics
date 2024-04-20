@@ -28,9 +28,9 @@ func New(docker *client.Client, extraLabels map[string]*template.Template, logEn
 }
 
 func (e *exporter) Describe(ch chan<- *prometheus.Desc) {
-	labels := make([]string, len(e.extraLabels))
-	for key, _ := range e.extraLabels {
-		labels = append(labels, key)
+	labels := []string{}
+	for label := range e.extraLabels {
+		labels = append(labels, label)
 	}
 	ch <- prometheus.NewDesc("validate", "", labels, nil)
 }
