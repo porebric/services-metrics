@@ -82,7 +82,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(
 		prometheus.NewDesc("total_memory_usage_Mib", "", []string{}, nil),
 		prometheus.GaugeValue,
-		float64(totalMemoryCounter.Get()/1024/1024/1024),
+		float64(totalMemoryCounter.Get()),
 	)
 
 	totalMemoryCounter.Clear()
