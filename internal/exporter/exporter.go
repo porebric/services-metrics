@@ -63,6 +63,7 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	var wg sync.WaitGroup
+	totalMemoryCounter := new(TotalMemoryCounter)
 	for _, c := range containers {
 		c := c
 		if !e.all && !slices.Contains(e.services, containerName(c)) {
@@ -71,15 +72,23 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := e.collectContainer(&c, ch); err != nil {
+			if err := e.collectContainer(&c, ch, totalMemoryCounter); err != nil {
 				logger.Error(ctx, err, "cannot collect container", "container", containerName(c))
 			}
 		}()
 	}
 	wg.Wait()
+
+	ch <- prometheus.MustNewConstMetric(
+		prometheus.NewDesc("total_memory_usage_Mib", "", []string{}, nil),
+		prometheus.GaugeValue,
+		float64(totalMemoryCounter.Get()/1024/1024/1024),
+	)
+
+	totalMemoryCounter.Clear()
 }
 
-func (e *exporter) collectContainer(c *types.Container, ch chan<- prometheus.Metric) error {
+func (e *exporter) collectContainer(c *types.Container, ch chan<- prometheus.Metric, totalMemoryCounter *TotalMemoryCounter) error {
 	labelsNames := []string{
 		"name", "state",
 	}
@@ -132,6 +141,8 @@ func (e *exporter) collectContainer(c *types.Container, ch chan<- prometheus.Met
 		float64(memoryBytes),
 		labelsValues...,
 	)
+
+	totalMemoryCounter.Add(memoryBytes)
 
 	ch <- prometheus.MustNewConstMetric(
 		prometheus.NewDesc("memory_limit_bytes", "", labelsNames, nil),
