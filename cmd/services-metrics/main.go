@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/docker/client"
 	"github.com/porebric/logger"
+	"github.com/porebric/services-metrics/internal/cleaner"
 	"github.com/porebric/services-metrics/internal/exporter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -82,6 +83,8 @@ func main() {
 			stop()
 		}
 	}()
+
+	go cleaner.CleanJaeger(ctx)
 
 	<-ctx.Done()
 }
