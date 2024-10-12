@@ -85,6 +85,7 @@ func main() {
 	}()
 
 	go cleaner.CleanJaeger(ctx)
+	go cleaner.CleanLoki(ctx)
 
 	<-ctx.Done()
 }

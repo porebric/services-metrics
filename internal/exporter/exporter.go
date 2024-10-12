@@ -113,6 +113,27 @@ func (e *exporter) collectContainer(c *types.Container, ch chan<- prometheus.Met
 		return fmt.Errorf("cannot decode stats: %v", err)
 	}
 
+	containerInfo, err := e.docker.ContainerInspect(context.TODO(), c.ID)
+	if err != nil {
+		return fmt.Errorf("cannot inspect container: %v", err)
+	}
+
+	// Использование дискового пространства
+	ch <- prometheus.MustNewConstMetric(
+		prometheus.NewDesc("disk_usage_bytes", "", labelsNames, nil),
+		prometheus.GaugeValue,
+		float64(*containerInfo.SizeRw),
+		labelsValues...,
+	)
+
+	// Полный размер файловой системы
+	ch <- prometheus.MustNewConstMetric(
+		prometheus.NewDesc("disk_size_rootfs_bytes", "", labelsNames, nil),
+		prometheus.GaugeValue,
+		float64(*containerInfo.SizeRootFs),
+		labelsValues...,
+	)
+
 	// CPU
 	ch <- prometheus.MustNewConstMetric(
 		prometheus.NewDesc("cpu_seconds_total", "", labelsNames, nil),
