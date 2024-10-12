@@ -125,8 +125,6 @@ func (e *exporter) collectContainer(c *types.Container, ch chan<- prometheus.Met
 			float64(*containerInfo.SizeRw),
 			labelsValues...,
 		)
-	} else {
-		logger.Error(e.ctx, nil, "SizeRw is nil")
 	}
 
 	if containerInfo.SizeRootFs != nil {
@@ -137,8 +135,6 @@ func (e *exporter) collectContainer(c *types.Container, ch chan<- prometheus.Met
 			float64(*containerInfo.SizeRootFs),
 			labelsValues...,
 		)
-	} else {
-		logger.Error(e.ctx, nil, "SizeRootFs is nil")
 	}
 
 	// CPU
