@@ -11,7 +11,7 @@ import (
 
 const (
 	lokiDataDir = "LOKI_DATA_DIR" // путь к директории с логами Loki (устанавливай через переменные окружения)
-	lokiDaysOld = 14              // срок жизни логов
+	lokiDaysOld = 4               // срок жизни логов
 )
 
 func CleanLoki(ctx context.Context) {
