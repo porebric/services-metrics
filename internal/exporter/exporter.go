@@ -15,17 +15,16 @@ import (
 )
 
 type exporter struct {
-	docker    *client.Client
-	logEntity *logger.Logger
-	services  []string
-	all       bool
+	docker   *client.Client
+	services []string
+	all      bool
+	ctx      context.Context
 }
 
-func New(docker *client.Client, services []string, all bool, logEntity *logger.Logger) *exporter {
-	e := &exporter{docker: docker, logEntity: logEntity}
+func New(ctx context.Context, docker *client.Client, services []string, all bool) *exporter {
+	e := &exporter{docker: docker, ctx: ctx}
 	if !all {
 		containers, err := e.docker.ContainerList(context.Background(), container.ListOptions{All: true})
-		ctx := logger.ToContext(context.Background(), logEntity)
 		if err != nil {
 			logger.Fatal(ctx, "cannot list containers", "error", err)
 			return nil
@@ -44,7 +43,7 @@ func New(docker *client.Client, services []string, all bool, logEntity *logger.L
 			}
 		}
 	}
-	return &exporter{docker: docker, logEntity: logEntity, services: services, all: all}
+	return &exporter{docker: docker, ctx: ctx, services: services, all: all}
 }
 
 func (e *exporter) Describe(_ chan<- *prometheus.Desc) {
@@ -52,7 +51,8 @@ func (e *exporter) Describe(_ chan<- *prometheus.Desc) {
 }
 
 func (e *exporter) Collect(ch chan<- prometheus.Metric) {
-	ctx := logger.ToContext(context.Background(), e.logEntity)
+	ctx := e.ctx
+
 	containers, err := e.docker.ContainerList(
 		context.Background(),
 		container.ListOptions{All: true},
@@ -118,21 +118,28 @@ func (e *exporter) collectContainer(c *types.Container, ch chan<- prometheus.Met
 		return fmt.Errorf("cannot inspect container: %v", err)
 	}
 
-	// Использование дискового пространства
-	ch <- prometheus.MustNewConstMetric(
-		prometheus.NewDesc("disk_usage_bytes", "", labelsNames, nil),
-		prometheus.GaugeValue,
-		float64(*containerInfo.SizeRw),
-		labelsValues...,
-	)
+	if containerInfo.SizeRw != nil {
+		ch <- prometheus.MustNewConstMetric(
+			prometheus.NewDesc("disk_usage_bytes", "", labelsNames, nil),
+			prometheus.GaugeValue,
+			float64(*containerInfo.SizeRw),
+			labelsValues...,
+		)
+	} else {
+		logger.Error(e.ctx, nil, "SizeRw is nil")
+	}
 
-	// Полный размер файловой системы
-	ch <- prometheus.MustNewConstMetric(
-		prometheus.NewDesc("disk_size_rootfs_bytes", "", labelsNames, nil),
-		prometheus.GaugeValue,
-		float64(*containerInfo.SizeRootFs),
-		labelsValues...,
-	)
+	if containerInfo.SizeRootFs != nil {
+		// Полный размер файловой системы
+		ch <- prometheus.MustNewConstMetric(
+			prometheus.NewDesc("disk_size_rootfs_bytes", "", labelsNames, nil),
+			prometheus.GaugeValue,
+			float64(*containerInfo.SizeRootFs),
+			labelsValues...,
+		)
+	} else {
+		logger.Error(e.ctx, nil, "SizeRootFs is nil")
+	}
 
 	// CPU
 	ch <- prometheus.MustNewConstMetric(

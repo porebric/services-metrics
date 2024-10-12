@@ -62,10 +62,10 @@ func main() {
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(
 		exporter.New(
+			ctx,
 			docker,
 			services,
 			all,
-			logger.FromContext(ctx),
 		),
 	)
 
