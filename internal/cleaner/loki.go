@@ -11,7 +11,7 @@ import (
 
 const (
 	lokiDataDir = "LOKI_DATA_DIR" // путь к директории с логами Loki (устанавливай через переменные окружения)
-	lokiDaysOld = 4               // срок жизни логов
+	lokiDaysOld = 14              // срок жизни логов
 )
 
 func CleanLoki(ctx context.Context) {
@@ -45,8 +45,6 @@ func cleanOldFilesLoki(ctx context.Context) error {
 		if now.Sub(info.ModTime()).Hours() > float64(lokiDaysOld*24) {
 			if err := os.Remove(path); err != nil {
 				logger.Error(ctx, err, "failed to delete file", "file", path)
-			} else {
-				logger.Info(ctx, "file deleted", "file", path)
 			}
 		}
 		return nil
