@@ -29,34 +29,23 @@ func CleanJaeger(ctx context.Context) {
 
 func cleanOldFiles(ctx context.Context) error {
 	now := time.Now()
+	rootDir := os.Getenv(directoryEnv)
 
-	files, err := os.ReadDir(os.Getenv(directoryEnv))
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		if file.IsDir() {
-			continue
+	return filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			logger.Error(ctx, err, "failed to access path")
+			return nil
 		}
 
-		filePath := filepath.Join(os.Getenv(directoryEnv), file.Name())
-
-		info, err := os.Stat(filePath)
-		if err != nil {
-			logger.Error(ctx, err, "get file info")
-			continue
+		if info.IsDir() {
+			return nil
 		}
 
 		if now.Sub(info.ModTime()).Hours() > float64(daysOld*24) {
-			err := os.Remove(filePath)
-			if err != nil {
-				logger.Error(ctx, err, "delete file")
-			} else {
-				logger.Info(ctx, "delete file")
+			if err := os.Remove(path); err != nil {
+				logger.Error(ctx, err, "failed to delete file", "file", path)
 			}
 		}
-	}
-
-	return nil
+		return nil
+	})
 }
